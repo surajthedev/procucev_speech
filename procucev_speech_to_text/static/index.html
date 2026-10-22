@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Real-time Multilingual Speech to Text Web Application with Database CRUD Operations">
+  <title>Procucev AI - Real-Time Multilingual Speech to Text</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="logo-group">
+          <div class="logo-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="22"></line>
+            </svg>
+          </div>
+          <div>
+            <h1 class="app-title">Procucev AI Voice Studio</h1>
+            <p class="app-subtitle">Real-Time Multilingual Speech-to-Text & Database CRUD Service</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <div class="status-indicator" id="connectionStatus">
+            <span class="status-dot online"></span>
+            <span class="status-text" id="connectionStatusText">System Ready</span>
+          </div>
+          <button class="btn btn-secondary" id="openManualEntryBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>New Note</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="main-content">
+      <!-- Real-Time Studio Section -->
+      <section class="studio-section">
+        <div class="studio-card">
+          <div class="studio-header">
+            <div class="studio-title-group">
+              <span class="badge badge-accent">Live Studio</span>
+              <h2 class="studio-heading">Real-Time Speech Transcription</h2>
+            </div>
+            
+            <div class="language-selector-group">
+              <label for="languageSelect" class="input-label">Spoken Language Mode</label>
+              <select id="languageSelect" class="form-select">
+                <option value="hinglish" selected>Hinglish (Hindi + English mixed)</option>
+                <option value="hi-IN">Hindi (India - हिन्दी)</option>
+                <option value="en-IN">English (India)</option>
+                <option value="en-US">English (United States)</option>
+                <option value="auto">Auto Detect Language</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Waveform Canvas -->
+          <div class="visualizer-container">
+            <canvas id="audioVisualizer" class="visualizer-canvas"></canvas>
+            <div class="visualizer-overlay" id="visualizerOverlay">
+              <div class="recording-timer" id="recordingTimer">00:00</div>
+              <div class="audio-state-text" id="audioStateText">Click "Start Recording" to speak</div>
+            </div>
+          </div>
+
+          <!-- Live Transcript Output Area -->
+          <div class="transcript-box-container">
+            <div class="transcript-box-header">
+              <div class="box-meta">
+                <span class="meta-item" id="detectedLangBadge">
+                  <span class="label">Detected Script:</span>
+                  <strong id="detectedLangText">Pending</strong>
+                </span>
+                <span class="meta-item">
+                  <span class="label">Words:</span>
+                  <strong id="liveWordCount">0</strong>
+                </span>
+                <span class="meta-item">
+                  <span class="label">Confidence:</span>
+                  <strong id="liveConfidence">100%</strong>
+                </span>
+              </div>
+              <div class="box-actions">
+                <button class="icon-btn" id="copyLiveTranscriptBtn" title="Copy text">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </button>
+                <button class="icon-btn" id="ttsLiveBtn" title="Read aloud using Text-to-Speech">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                </button>
+                <button class="icon-btn" id="clearLiveBtn" title="Clear transcript">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="transcript-display" id="transcriptDisplay" contenteditable="true" spellcheck="false" placeholder="Your transcribed words will appear here in real-time as you speak in Hindi, English, or Hinglish..."></div>
+            <div class="transcript-hint">You can edit the text above before saving to the database.</div>
+          </div>
+
+          <!-- Studio Bottom Controls -->
+          <div class="studio-controls">
+            <div class="primary-controls">
+              <button class="btn btn-record" id="recordToggleBtn">
+                <svg class="record-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
+                </svg>
+                <span id="recordBtnLabel">Start Recording</span>
+              </button>
+
+              <button class="btn btn-primary" id="saveToDbBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                <span>Save to Database</span>
+              </button>
+            </div>
+
+            <!-- Upload Audio Option -->
+            <div class="audio-upload-zone">
+              <input type="file" id="audioFileInput" accept="audio/*" class="file-input-hidden">
+              <button class="btn btn-outline" id="uploadAudioTriggerBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span>Upload Audio File</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analytics Metric Cards -->
+      <section class="metrics-section">
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-info">
+              <span class="metric-label">Total Transcriptions</span>
+              <h3 class="metric-value" id="statTotalTranscriptions">0</h3>
+            </div>
+            <div class="metric-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-info">
+              <span class="metric-label">Total Words Processed</span>
+              <h3 class="metric-value" id="statTotalWords">0</h3>
+            </div>
+            <div class="metric-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                <line x1="9" y1="20" x2="15" y2="20"></line>
+                <line x1="12" y1="4" x2="12" y2="20"></line>
+              </svg>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-info">
+              <span class="metric-label">Average Confidence</span>
+              <h3 class="metric-value" id="statAvgConfidence">96%</h3>
+            </div>
+            <div class="metric-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-info">
+              <span class="metric-label">Database Storage</span>
+              <h3 class="metric-value" id="statDbEngine">Relational SQL</h3>
+            </div>
+            <div class="metric-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- History & CRUD Management Section -->
+      <section class="history-section">
+        <div class="history-card">
+          <div class="history-header">
+            <div>
+              <h2 class="section-title">Transcription History & Management</h2>
+              <p class="section-description">Complete CRUD operations: Browse, View, Edit, Read Aloud, and Delete stored records.</p>
+            </div>
+
+            <div class="history-toolbar">
+              <!-- Search Input -->
+              <div class="search-box">
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search transcriptions by title or content...">
+              </div>
+
+              <!-- Filter by Language -->
+              <div class="filter-group">
+                <select id="filterLanguageSelect" class="form-select">
+                  <option value="all">All Languages</option>
+                  <option value="Hinglish">Hinglish</option>
+                  <option value="Hindi">Hindi</option>
+                  <option value="English">English</option>
+                </select>
+              </div>
+
+              <!-- Export Data Menu -->
+              <div class="export-group">
+                <button class="btn btn-outline" id="exportCsvBtn" title="Export as CSV">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>Export CSV</span>
+                </button>
+                <button class="btn btn-outline" id="exportJsonBtn" title="Export as JSON">
+                  <span>Export JSON</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transcription Records List Container -->
+          <div class="records-container" id="recordsList">
+            <div class="loading-state">
+              <div class="spinner"></div>
+              <p>Loading stored transcriptions...</p>
+            </div>
+          </div>
+
+          <!-- Pagination Footer -->
+          <div class="pagination-footer" id="paginationFooter">
+            <div class="pagination-info" id="paginationInfo">Showing 0 of 0 records</div>
+            <div class="pagination-buttons">
+              <button class="btn btn-sm btn-outline" id="prevPageBtn" disabled>Previous</button>
+              <span class="page-number" id="currentPageIndicator">Page 1</span>
+              <button class="btn btn-sm btn-outline" id="nextPageBtn" disabled>Next</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-container">
+        <p>Procucev AI Tech Hiring Assignment - Real-Time Multilingual Speech to Text Web Application</p>
+        <p class="footer-subtext">Supports Hindi, English, and Hinglish with PostgreSQL/MySQL/SQLite Relational Database.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal: Save / New Transcription -->
+  <div class="modal-backdrop" id="saveModalBackdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="saveModalTitle">Save Transcription</h3>
+        <button class="modal-close-btn" id="closeSaveModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="saveTitleInput" class="form-label">Title</label>
+          <input type="text" id="saveTitleInput" class="form-input" placeholder="e.g., Client Meeting Notes or Hindi-English Conversation">
+        </div>
+        <div class="form-group">
+          <label for="saveLanguageSelect" class="form-label">Language Classification</label>
+          <select id="saveLanguageSelect" class="form-select">
+            <option value="Hinglish">Hinglish (Hindi + English)</option>
+            <option value="Hindi">Hindi</option>
+            <option value="English">English</option>
+            <option value="Multilingual">Multilingual</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="saveContentTextarea" class="form-label">Transcription Text</label>
+          <textarea id="saveContentTextarea" class="form-textarea" rows="4" placeholder="Transcription content..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="saveNotesInput" class="form-label">Additional Notes (Optional)</label>
+          <input type="text" id="saveNotesInput" class="form-input" placeholder="Add context, speaker tags, or summary">
+        </div>
+        <div class="form-group">
+          <label for="saveTagsInput" class="form-label">Tags (Comma-separated)</label>
+          <input type="text" id="saveTagsInput" class="form-input" placeholder="meeting, interview, test">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelSaveModalBtn">Cancel</button>
+        <button class="btn btn-primary" id="confirmSaveBtn">Save Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Transcription (CRUD Update) -->
+  <div class="modal-backdrop" id="editModalBackdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Transcription Record</h3>
+        <button class="modal-close-btn" id="closeEditModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editRecordId">
+        <div class="form-group">
+          <label for="editTitleInput" class="form-label">Title</label>
+          <input type="text" id="editTitleInput" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="editLanguageSelect" class="form-label">Language</label>
+          <select id="editLanguageSelect" class="form-select">
+            <option value="Hinglish">Hinglish</option>
+            <option value="Hindi">Hindi</option>
+            <option value="English">English</option>
+            <option value="Multilingual">Multilingual</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editContentTextarea" class="form-label">Transcription Content</label>
+          <textarea id="editContentTextarea" class="form-textarea" rows="5"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="editNotesInput" class="form-label">Notes</label>
+          <input type="text" id="editNotesInput" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="editTagsInput" class="form-label">Tags</label>
+          <input type="text" id="editTagsInput" class="form-input">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelEditModalBtn">Cancel</button>
+        <button class="btn btn-primary" id="confirmUpdateBtn">Update Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Delete Confirmation -->
+  <div class="modal-backdrop" id="deleteModalBackdrop">
+    <div class="modal-dialog modal-dialog-sm">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirm Delete</h3>
+        <button class="modal-close-btn" id="closeDeleteModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="deleteRecordId">
+        <p class="delete-warning-text">Are you sure you want to delete this transcription record from the database? This action cannot be undone.</p>
+        <div class="delete-preview-box" id="deletePreviewTitle"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelDeleteModalBtn">Cancel</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">Delete Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
